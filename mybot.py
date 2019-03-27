@@ -13,7 +13,6 @@ bot = praw.Reddit(user_agent='classes v0.1',
 subreddit = bot.subreddit('fourpanelcringe')
 comments = subreddit.stream.comments()
 
-
 # Have we run this code before? If not, create an empty list
 if not os.path.isfile("posts_replied_to.txt"):
     posts_replied_to = []
@@ -42,7 +41,7 @@ with open("posts_replied_to.txt", "w") as f:
 #for comment in comments:
 #    text = comment.body # Fetch body
 #    author = comment.author # Fetch author
-#    if 'fialed' in text.lower():
+#    if 'failed' in text.lower():
 #        # Generate a message
 #        #message = "Why no love for Titan, u/{0} ?".format(author)
 #        message = "Oof"
