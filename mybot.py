@@ -13,7 +13,7 @@ comments = subreddit.stream.comments()
 for comment in comments:
     text = comment.body # Fetch body
     author = comment.author # Fetch author
-    if 'fialed' in text.lower():
+    if 'failed' in text.lower():
         # Generate a message
         #message = "Why no love for Titan, u/{0} ?".format(author)
         message = "Oof"
