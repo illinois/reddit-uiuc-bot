@@ -12,7 +12,7 @@ def get_class(name, df):
     course = name_split[0]
     num = name_split[1]
     classes = df[(df["Subject"] == course) & (df["Number"] == int(num))]
-    classes = classes.groupby("Primary Instructor")['GPA'].mean()
+    classes = classes.groupby("Primary Instructor")['GPA'].mean().reset_index()
     return classes
 
 def from_crn(crn_num):
@@ -72,10 +72,16 @@ def main():
                 print("here5")
                 result = re.search('/[(/w+)()?(/d+/)]', submission.title)
                 #lookup = result.group(0) + result.group(1) + result.group(2)
-                answer = get_class("CS 225", df)
-                new_answer = answer.to_string()
+                d = get_class("CS 225", df)
 
-                submission.reply(new_answer)
+                s = ""
+                for index, row in d.iterrows():
+                    instructor = row["Primary Instructor"]
+                    gpa = row["GPA"]
+                    s = s + f"<b>Instructor</b>: {instructor}, GPA: {gpa}"
+                    s = s + "\n"
+                submission.reply(s)
+
                 print("Bot replying to : ", submission.title)
                 posts_replied_to.append(submission.id)
             elif re.search('/[/d/d/d/d/d]', submission.title, re.IGNORECASE):
