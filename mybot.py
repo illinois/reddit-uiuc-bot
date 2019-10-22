@@ -45,9 +45,9 @@ def main():
                   username='classbotuiuc',
                   password='lovecs225')
 
-    print("here1")
-
     subreddit = bot.subreddit('testingground4bots')
+
+    
     comments = subreddit.stream.comments()
 
     # Have we run this code before? If not, create an empty list
@@ -64,39 +64,49 @@ def main():
 
     # Get the top 5 values from our subreddit
     for submission in subreddit.new(limit=50):
-        print("here2")
-
         if submission.id not in posts_replied_to:
             #r"\[((/w+)()?(/d+))\]"
-            if re.search("How is it?", submission.title, re.IGNORECASE):
-                print("here5")
-                result = re.search('/[(/w+)()?(/d+/)]', submission.title)
-                #lookup = result.group(0) + result.group(1) + result.group(2)
-                d = get_class("CS 225", df)
-
-                s = ""
-                for index, row in d.iterrows():
-                    instructor = row["Primary Instructor"]
-                    gpa = row["GPA"]
-                    s = s + f"<b>Instructor</b>: {instructor}, GPA: {gpa}"
-                    s = s + "\n"
-                submission.reply(s)
-
-                print("Bot replying to : ", submission.title)
-                posts_replied_to.append(submission.id)
-            elif re.search('/[/d/d/d/d/d]', submission.title, re.IGNORECASE):
-                print("here6")
-                result = re.search('/[/d/d/d/d/d]', submission.title)
-                lookup = from_crn(result.group(0))
-                submission.reply(get_class(lookup))
-                print("Bot replying to : ", submission.title)
-                posts_replied_to.append(submission.id)
-
+            if re.search('\[(\w\w\w?\w?)\s?(\d\d\d)\]', submission.title, re.IGNORECASE):
+                result = '\[(\w\w\w?\w?)\s?(\d\d\d)\]'
+                class_list = []
+                all_matches = re.findall(result, submission.title)
+                for match in all_matches:
+                  subject = match[0]
+                  number = match[1]
+                  course = f"{subject} {number}"
+                  class_list.append(course)
+                for item in class_list:
+                    d = get_class(item, df)
+                    s = ""
+                    for index, row in d.iterrows():
+                        instructor = row["Primary Instructor"]
+                        gpa = row["GPA"]
+                        s = s + f"**Instructor**: {instructor}, **GPA**: {gpa}"
+                        s = s + "\n\n"
+                    submission.reply(s)
+                    print("Bot replying to : ", submission.title)
+                    posts_replied_to.append(submission.id)
+            elif re.search('\[(\d\d\d\d\d)\]', submission.title, re.IGNORECASE):
+                result = '\[(\d\d\d\d\d)\]'
+                class_list = []
+                all_matches = re.findall(result, submission.title)
+                for match in all_matches:
+                  course = from_crn(match)
+                  class_list.append(course)
+                for item in class_list:
+                    d = get_class(item, df)
+                    s = ""
+                    for index, row in d.iterrows():
+                        instructor = row["Primary Instructor"]
+                        gpa = row["GPA"]
+                        s = s + f"**Instructor**: {instructor}, **GPA**: {gpa}"
+                        s = s + "\n\n"
+                    submission.reply(s)
+                    print("Bot replying to : ", submission.title)
+                    posts_replied_to.append(submission.id)
 
     # Write our updated list back to the file
     with open("posts_replied_to.txt", "w") as f:
-        print("here3")
-
         for post_id in posts_replied_to:
             f.write(post_id + "\n")
 
