@@ -6,8 +6,7 @@ import requests
 import csv
 import pandas as pd
 import numpy as np
-
-import .course-data as courses
+from process_reddit_post import get_reply_from_submission
 
 df = pd.read_csv('gpa-dataset.csv')
 df = df[ df["YearTerm"] >= '2017-fa' ]
@@ -30,10 +29,10 @@ else:
 
 
 # Bot Logic/Processing
-for submission in subreddit.new(limit=50):
+for submission in subreddit.new(limit=3):
     if submission.id not in posts_replied_to:
       # Use both the title of the post and body:
-      s = submission.title + " " + submission.body
+      s = submission.title + " " + submission.selftext
       reply = get_reply_from_submission(s)
 
       # Reply and record reply:
