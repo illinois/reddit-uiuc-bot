@@ -1,5 +1,7 @@
 import pandas as pd
 import re
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 course_schedule_url_template = "https://courses.illinois.edu/schedule/2020/spring/:subject/:number"
 gpa_visualization_url_template = "https://waf.cs.illinois.edu/discovery/grade_disparity_between_sections_at_uiuc/?subj=:subject&course=:number"
@@ -33,63 +35,87 @@ def get_recent_average_gpa(course):
 def get_course_from_crn(crn):
     crn = int(crn)
     df_crnMatch = df_courseSchedule[ df_courseSchedule["CRN"] == crn ]
-    if len(df_crnMatch) == 0: return None
+    if len(df_crnMatch) == 0:
+      logging.debug(f"No CRN Found: {crn}")
+      return None
 
     subject = df_crnMatch['Subject'].values[0]
-    num = df_crnMatch['Number'].values[0]
-    return subject + " " + str(num)
+    number = df_crnMatch['Number'].values[0]
+    course = f"{subject} {number}" 
+    
+    logging.debug(f"CRN Found: {crn} -> {course}")
+    return course
 
 
 def format_reply_for_course(course):
   subject, number = course.split(" ")
 
   d = df_courseSchedule[ df_courseSchedule["Course"] == course ]
-  if len(d) == 0: return None
+  if len(d) == 0:
+    logging.debug(f"No Course Found: {course}")
+    return None
 
   courseName = d["Name"].values[0]
-  courseDescription = d["Description"].values[0]
+  courseDescription = d["Description"].values[0].replace("(", "\(").replace(")", "\)")
   creditHours = d["Credit Hours"].values[0]
   courseScheduleURL = course_schedule_url_template.replace(":subject", subject).replace(":number", number)
   gpaVizURL = gpa_visualization_url_template.replace(":subject", subject).replace(":number", number)
   avgGPA = get_recent_average_gpa(course)
   if avgGPA == None:
     avgGPA = "*No recent GPA data available*"
+  else:
+    avgGPA = round(avgGPA, 2)
 
-  return f"[{course}]: {courseName} ({creditHours})\n" + \
+  logging.debug(f"Course Found: {course}")
+  return f"**\[{course}\]**: **{courseName}** -- {creditHours}\n" + \
+    f"- ✅ Offered in {courseScheduleTerm} -- [Course Schedule for {course}]({courseScheduleURL})\n" + \
+    f"- Recent Average GPA: **{avgGPA}** -- [GPA Visualization for {course}]({gpaVizURL})\n" + \
     f"\n" + \
-    f"^({courseDescription})\n" + \
-    f"\n" + \
-    f"- Offered in {courseScheduleTerm} -- (See: [Course Schedule]({courseScheduleURL}))\n" + \
-    f"- Recent Average GPA: {avgGPA} -- (See: [GPA Visualization]({gpaVizURL}))"
+    f"^({courseDescription})\n"
 
 
-def get_reply_from_submission(s, courses = []):
+def get_reply_from_submission(s, id=-1):
   courseInfos = []
   courses = []
 
   # Find all CRNs:
-  re_crn = '\[(\d\d\d\d\d)\]'
+  re_crn = '\[(\d{5})\]'
   crnMatches = re.findall(re_crn, s)
   for crnMatch in crnMatches:
     crn = crnMatch
+    logging.info(f"[{id}] CRN Match: {crn}")
+
     course = get_course_from_crn(crn)
     if course != None and course not in courses:
       courseInfo = format_reply_for_course(course)
       if courseInfo != None:
-        courseInfos.append(f"[{crn}] -> " + courseInfo)
+        courseInfos.append(f"**\[{crn}\]** -> " + courseInfo)
         courses.append(course)
+        logging.info(f"[{id}] Output: {course}")
+
 
   # Find all courses:
-  re_course = '\[(\w\w\w?\w?)\s?(\d\d\d)\]'
+  re_course = '\[([A-Za-z]{2,4})\s?(\d{3})\]'
   courseMatches = re.findall(re_course, s)
   for courseMatch in courseMatches:
     subject = courseMatch[0]
     number = courseMatch[1]
     course = f"{subject} {number}"
+    logging.info(f"[{id}] Course Match: {course}")
+
     if course not in courses:
       courseInfo = format_reply_for_course(course)
       if courseInfo != None:
         courseInfos.append(courseInfo)
+        courses.append(course)
+        logging.info(f"[{id}] Output: {course}")
 
+  # Prevent the output from being HUGE
+  if len(courseInfos) > 10:
+    courseInfos = courseInfos[0:9]
+  
   # Join all the courseInfo strings together with an <hr> between them:
-  return "\n\n---\n\n".join(courseInfos)
+  if len(courseInfos) == 0:
+    return None
+  else:
+    return "\n\n---\n\n".join(courseInfos)
