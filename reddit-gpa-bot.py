@@ -4,6 +4,7 @@ import re
 import os
 import requests
 import csv
+import time
 import pandas as pd
 import numpy as np
 from process_reddit_post import get_reply_from_submission
@@ -21,29 +22,36 @@ bot = praw.Reddit(user_agent='classes v0.1',
 subreddit = bot.subreddit('testingground4bots')
 comments = subreddit.stream.comments()
 
-# Load cache of replied_to posts:
-if not os.path.isfile("posts_replied_to.txt"):
-  posts_replied_to = []
-else:
-  with open("posts_replied_to.txt", "r") as f:
-    posts_replied_to = f.read()
-    posts_replied_to = posts_replied_to.split("\n")
-    posts_replied_to = list(filter(None, posts_replied_to))
+def main():
+    # Load cache of replied_to posts:
+    if not os.path.isfile("posts_replied_to.txt"):
+      posts_replied_to = []
+    else:
+      with open("posts_replied_to.txt", "r") as f:
+        posts_replied_to = f.read()
+        posts_replied_to = posts_replied_to.split("\n")
+        posts_replied_to = list(filter(None, posts_replied_to))
 
-# Bot Logic/Processing
-for submission in subreddit.new(limit=20):
-  if submission.id not in posts_replied_to:
-    # Use both the title of the post and body:
-    s = submission.title + " " + submission.selftext
-    reply = get_reply_from_submission(s, submission.id)
+    # Bot Logic/Processing
+    for submission in subreddit.new(limit=20):
+      if submission.id not in posts_replied_to:
+        # Use both the title of the post and body:
+        #for comments in submission.comments:
+        s = submission.title + " " + submission.selftext
+        reply = get_reply_from_submission(s, submission.id)
 
-    # Reply and record reply:
-    if reply:
-      submission.reply(reply)
-      print(f"Bot replying to: {submission.title}")
-    
-    posts_replied_to.append(submission.id)
+        # Reply and record reply:
+        if reply:
+          submission.reply(reply)
+          print(f"Bot replying to: {submission.title}")
 
-with open("posts_replied_to.txt", "w") as f:
-  for post_id in posts_replied_to:
-    f.write(post_id + "\n")
+        posts_replied_to.append(submission.id)
+
+    with open("posts_replied_to.txt", "w") as f:
+      for post_id in posts_replied_to:
+        f.write(post_id + "\n")
+
+
+while 1:
+  main()
+  time.sleep(5) #Wait 5 Seconds
