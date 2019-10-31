@@ -47,9 +47,23 @@ def main():
 
         posts_replied_to.append(submission.id)
 
+    for comment in subreddit.stream.comments() and subreddit.new(limit=200):
+      if comment.id not in posts_replied_to:
+        s = comment.selftext
+        reply = get_reply_from_submission(s, comment.id)
+
+        # Reply and record reply:
+        if reply:
+          comment.reply(reply)
+          print(f"Bot replying to: {comment.author}")
+
+        posts_replied_to.append(comment.id)
+
     with open("posts_replied_to.txt", "w") as f:
       for post_id in posts_replied_to:
         f.write(post_id + "\n")
+
+    print("im out")
 
 
 while 1:
