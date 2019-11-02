@@ -69,9 +69,7 @@ def format_reply_for_course(course):
   logging.debug(f"Course Found: {course}")
   return f"**\[{course}\]**: **{courseName}** -- {creditHours}\n" + \
     f"- ✅ Offered in {courseScheduleTerm} -- [Course Schedule for {course}]({courseScheduleURL})\n" + \
-    f"- Recent Average GPA: **{avgGPA}** -- [GPA Visualization for {course}]({gpaVizURL})\n" + \
-    f"\n" + \
-    f"^({courseDescription})\n"
+    f"- Recent Average GPA: **{avgGPA}** -- [GPA Visualization for {course}]({gpaVizURL})\n"
 
 
 def get_reply_from_submission(s, id=-1):
@@ -98,7 +96,7 @@ def get_reply_from_submission(s, id=-1):
   re_course = '\[([A-Za-z]{2,4})\s?(\d{3})\]'
   courseMatches = re.findall(re_course, s)
   for courseMatch in courseMatches:
-    subject = courseMatch[0]
+    subject = courseMatch[0].upper()
     number = courseMatch[1]
     course = f"{subject} {number}"
     logging.info(f"[{id}] Course Match: {course}")
