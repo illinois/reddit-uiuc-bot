@@ -21,5 +21,7 @@ test("[CS225] [CS225] [CS 225]")
 test("[CS  225]")
 test("CS 225")
 
+test("[cs225]")
+
 
 test("The quick brown fox jumped over the lazy red dog.")
