@@ -33,7 +33,7 @@ def main():
         posts_replied_to = list(filter(None, posts_replied_to))
 
     #Bot Logic/Processing
-    for submission in subreddit.new(limit=20):
+    for submission in subreddit.new(limit=6):
       if submission.id not in posts_replied_to:
         # Use both the title of the post and body:
         #for comments in submission.comments:
@@ -47,18 +47,20 @@ def main():
 
         posts_replied_to.append(submission.id)
 
-    # for comment in subreddit.stream.comments():
-    #   if comment.id not in posts_replied_to:
-    #     s = comment.body
-    #     reply = get_reply_from_submission(s, comment.id)
-    #
-    #     # Reply and record reply:
-    #     if reply:
-    #       comment.reply(reply)
-    #       print(f"Bot replying to: {comment.author}")
-    #
-    #     posts_replied_to.append(comment.id)
-    #
+    print("IM HERE")
+
+    for comment in subreddit.stream.comments():
+      if comment.id not in posts_replied_to:
+        s = comment.body
+        reply = get_reply_from_submission(s, comment.id)
+
+        # Reply and record reply:
+        if reply:
+          comment.reply(reply)
+          print(f"Bot replying to: {comment.author}")
+
+        posts_replied_to.append(comment.id)
+
     with open("posts_replied_to.txt", "w") as f:
       for post_id in posts_replied_to:
         f.write(post_id + "\n")
