@@ -38,32 +38,33 @@ def get_recent_average_gpa(course):
 
 
 def get_all_geneds(course):
-  df = df_gened[ df_gened["Course"] == course ]
+  df = df_courseSchedule[ df_courseSchedule["Course"] == course ]
   if len(df) == 0: return None
 
-  gen_eds_offered = []
-  if not df["ACP"].empty:
-      gen_eds_offered.append("Advance Composition")
-  if not df["CS"].empty:
-      gen_eds_offered.append("Cultural Studies")
-  if not df["HUM"].empty:
-      gen_eds_offered.append("Humanities")
-  if not df["NAT"].empty:
-      gen_eds_offered.append("Natural Sciences")
-  if not df["QR"].empty:
-      gen_eds_offered.append("Quantitative Reasoning")
-  if not df["SBS"].empty:
-      gen_eds_offered.append("Social & Behavior")
-
-  if gen_eds_offered == None:
+  gened = df["Degree Attributes"]
+  if len(gened) == 0:
       return None
 
-  gen_ed_formatted = ""
-  if len(gen_eds_offered) > 1:
-      for i in range(len(gen_eds_offered) - 1):
-          gen_ed_formatted += gen_eds_offered[i]
-          gen_ed_formatted += ", "
-  gen_ed_formatted += gen_eds_offered[len(gen_eds_offered)-1]
+  print(gened)
+
+  gened = gened.values[0]
+  print(gened)
+
+  gen_eds_offered = []
+  if "Advanced Composition" in gened:
+      gen_eds_offered.append("Advance Composition")
+  if "Cultural Studies" in gened:
+      gen_eds_offered.append("Cultural Studies")
+  if "Humanities" in gened:
+      gen_eds_offered.append("Humanities")
+  if "Natural Sciences" in gened:
+      gen_eds_offered.append("Natural Sciences")
+  if "Quantitative Reasoning" in gened:
+      gen_eds_offered.append("Quantitative Reasoning")
+  if "Social & Behavior" in gened:
+      gen_eds_offered.append("Social & Behavior")
+
+  gen_ed_formatted = ",".join(gen_eds_offered)
 
   return gen_ed_formatted
 
@@ -95,14 +96,18 @@ def format_reply_for_course(course):
   if len(d) == 0:
       courseName = actual_class["Name"].values[0]
       creditHours = actual_class["Credit Hours"].values[0]
+      gen_eds = get_all_geneds(actual_class)
+      if gen_eds == None:
+          gen_eds = "*No gen eds are fullfilled*"
   else:
       courseName = d["Name"].values[0]
       creditHours = d["Credit Hours"].values[0]
       courseScheduleURL = course_schedule_url_template.replace(":subject", subject).replace(":number", number)
+      gen_eds = get_all_geneds(course)
+      if gen_eds == None:
+          gen_eds = "*No gen eds are fullfilled*"
 
-  gen_eds = get_all_geneds(course)
-  if gen_eds == None:
-      gen_eds = "*No gen eds are fullfilled*"
+
   gpaVizURL = gpa_visualization_url_template.replace(":subject", subject).replace(":number", number)
   avgGPA = get_recent_average_gpa(course)
   if avgGPA == None:
