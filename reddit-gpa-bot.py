@@ -1,70 +1,87 @@
 import praw
-import pdb
-import re
 import os
-import requests
-import csv
 import time
-import pandas as pd
-import numpy as np
+import logging
+
 from process_reddit_post import get_reply_from_submission
 
-df = pd.read_csv('gpa-dataset.csv')
-df = df[ df["YearTerm"] >= '2017-fa' ]
 
+# Using .env file for instance-specific settings
+from dotenv import load_dotenv
+load_dotenv()
 
 # Reddit Bot Init
-bot = praw.Reddit(user_agent='classes v0.1',
-    client_id='XoDRN8nBSmglSg',
-    client_secret='RBW92Bu-hmwaMnXIs74VLB2n-V4',
-    username='classbotuiuc',
-    password='lovecs225')
+bot = praw.Reddit(user_agent='UIUC GPA Bot v0.1',
+    client_id = os.getenv('CLIENT_ID'),
+    client_secret = os.getenv('CLIENT_SECRET'),
+    username = os.getenv('REDDIT_USERNAME'),
+    password= os.getenv('PASSWORD'))
 subreddit = bot.subreddit('testingground4bots')
-comments = subreddit.stream.comments()
 
-def main():
-    # Load cache of replied_to posts:
-    if not os.path.isfile("posts_replied_to.txt"):
-      posts_replied_to = []
-    else:
-      with open("posts_replied_to.txt", "r") as f:
-        posts_replied_to = f.read()
-        posts_replied_to = posts_replied_to.split("\n")
-        posts_replied_to = list(filter(None, posts_replied_to))
+comment_stream = subreddit.stream.comments(pause_after = -1)
+submission_stream = subreddit.stream.submissions(pause_after = -1)
 
-    #Bot Logic/Processing
-    for submission in subreddit.new(limit=6):
-      if submission.id not in posts_replied_to:
-        # Use both the title of the post and body:
-        #for comments in submission.comments:
-        s = submission.title + " " + submission.selftext
-        reply = get_reply_from_submission(s, submission.id)
+# Load cache of replied_to posts:
+if not os.path.isfile("posts_replied_to.txt"):
+  posts_replied_to = []
+else:
+  with open("posts_replied_to.txt", "r") as f:
+    posts_replied_to = f.read()
+    posts_replied_to = posts_replied_to.split("\n")
+    posts_replied_to = list(filter(None, posts_replied_to))
 
-        # Reply and record reply:
-        if reply:
-          submission.reply(reply)
-          print(f"Bot replying to: {submission.title}")
 
-        posts_replied_to.append(submission.id)
+# == Processing Logic ==
+def processComment(commment):
+  if comment.id in posts_replied_to:
+    return
 
-    print("IM HERE")
+  # The content of the comment is the `body`  
+  s = comment.body
 
-    for comment in subreddit.stream.comments():
-      if comment.id not in posts_replied_to:
-        s = comment.body
-        reply = get_reply_from_submission(s, comment.id)
+  # Check if the bot should reply and log any replies:
+  reply = get_reply_from_submission(s, comment.id)
+  if reply:
+    comment.reply(reply)
+    print(f"Bot replying to: {comment.id} by {comment.author}")
 
-        # Reply and record reply:
-        if reply:
-          comment.reply(reply)
-          print(f"Bot replying to: {comment.author}")
+  posts_replied_to.append(comment.id)
 
-        posts_replied_to.append(comment.id)
+def processSubmission(submission):
+  if submission.id in posts_replied_to:
+    return
 
-    with open("posts_replied_to.txt", "w") as f:
-      for post_id in posts_replied_to:
-        f.write(post_id + "\n")
+  # Use both the title of the post and body:
+  s = submission.title + " " + submission.selftext
 
-while 1:
-  main()
-  time.sleep(5) #Wait 5 Seconds
+  # Check if the bot should reply and log any replies:
+  reply = get_reply_from_submission(s, submission.id)
+  if reply:
+    submission.reply(reply)
+    print(f"Bot replying to: {submission.title}")
+
+  posts_replied_to.append(submission.id)  
+
+
+# == "main" loop ==
+while True:
+  # Process any new comments:
+  for comment in comment_stream:
+    if comment is None:
+      break
+    processComment(comment)
+
+  # Process any new submissions (posts):
+  #for submission in submission_stream:
+  #  if submission is None:
+  #    break
+  #  processSubmission(submission)
+
+  # Record any replies (for bot restart)
+  with open("posts_replied_to.txt", "w") as f:
+    for post_id in posts_replied_to:
+      f.write(post_id + "\n")
+
+  # Pause (5 seconds):
+  logging.debug(f"Sleeping...")
+  time.sleep(60)

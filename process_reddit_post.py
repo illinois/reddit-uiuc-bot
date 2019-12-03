@@ -1,5 +1,7 @@
 import pandas as pd
 import re
+import math
+
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -45,27 +47,29 @@ def get_all_geneds(course):
   if len(gened) == 0:
       return None
 
-  print(gened)
-
   gened = gened.values[0]
-  print(gened)
-
   gen_eds_offered = []
-  if "Advanced Composition" in gened:
-      gen_eds_offered.append("Advance Composition")
-  if "Cultural Studies" in gened:
-      gen_eds_offered.append("Cultural Studies")
-  if "Humanities" in gened:
-      gen_eds_offered.append("Humanities")
-  if "Natural Sciences" in gened:
-      gen_eds_offered.append("Natural Sciences")
-  if "Quantitative Reasoning" in gened:
-      gen_eds_offered.append("Quantitative Reasoning")
-  if "Social & Behavior" in gened:
-      gen_eds_offered.append("Social & Behavior")
+  logging.debug(f"GenEds String: {gened}")
+
+  if str(gened) != "nan":
+    if "Advanced Composition" in gened:
+        gen_eds_offered.append("Advance Composition")
+    if "Cultural Studies" in gened:
+        gen_eds_offered.append("Cultural Studies")
+    if "Humanities" in gened:
+        gen_eds_offered.append("Humanities")
+    if "Natural Sciences" in gened:
+        gen_eds_offered.append("Natural Sciences")
+    if "Quantitative Reasoning" in gened:
+        gen_eds_offered.append("Quantitative Reasoning")
+    if "Social & Behavior" in gened:
+        gen_eds_offered.append("Social & Behavior")
+
+  if len(gen_eds_offered) == 0:
+    return None
 
   gen_ed_formatted = ",".join(gen_eds_offered)
-
+  logging.debug(f"GenEds Found: {gen_ed_formatted}")
   return gen_ed_formatted
 
 
@@ -97,37 +101,39 @@ def format_reply_for_course(course):
       courseName = actual_class["Name"].values[0]
       creditHours = actual_class["Credit Hours"].values[0]
       gen_eds = get_all_geneds(actual_class)
-      if gen_eds == None:
-          gen_eds = "*No gen eds are fullfilled*"
   else:
       courseName = d["Name"].values[0]
       creditHours = d["Credit Hours"].values[0]
       courseScheduleURL = course_schedule_url_template.replace(":subject", subject).replace(":number", number)
       gen_eds = get_all_geneds(course)
-      if gen_eds == None:
-          gen_eds = "*No gen eds are fullfilled*"
-
 
   gpaVizURL = gpa_visualization_url_template.replace(":subject", subject).replace(":number", number)
   avgGPA = get_recent_average_gpa(course)
-  if avgGPA == None:
-    avgGPA = "*No recent GPA data available*"
-  else:
-    avgGPA = round(avgGPA, 2)
+
 
   logging.debug(f"Course Found: {course}")
+
+  # Course Info:
+  response = f"**\[{course}\]**: **{courseName}** -- {creditHours}"
+
+  # Course Offering Term:
   if len(d) > 0:
-      return f"**\[{course}\]**: **{courseName}** -- {creditHours}\n" + \
-        f"- ✅ Offered in {courseScheduleTerm} -- [Course Schedule for {course}]({courseScheduleURL})\n" + \
-        f"- Recent Average GPA: **{avgGPA}** -- [GPA Visualization for {course}]({gpaVizURL})\n"+ \
-        f"- Gen Eds Fullfilled: {gen_eds}\n"
+    response += f" -- ✅ [Offered in {courseScheduleTerm}]({courseScheduleURL})"
   else:
-      return f"**\[{course}\]**: **{courseName}** -- {creditHours}\n" + \
-        f"- ❌ Not offered in {courseScheduleTerm}\n" + \
-        f"- Recent Average GPA: **{avgGPA}** -- [GPA Visualization for {course}]({gpaVizURL})\n"+ \
-        f"- Gen Eds Fullfilled: {gen_eds}\n"
+    response += f" -- ❌ Not offered in {courseScheduleTerm}"
 
+  # Course GPA:
+  if avgGPA == None:
+    response += f" -- No recent GPA data"
+  else:
+    avgGPA = round(avgGPA, 2)
+    response += f" -- [Recent Average GPA]({gpaVizURL}): **{avgGPA}**"
 
+  # GenEd Info:
+  if gen_eds != None:
+    response = f" -- Fullfilles: {gen_eds}"
+
+  return response
 
 
 def get_reply_from_submission(s, id=-1):
