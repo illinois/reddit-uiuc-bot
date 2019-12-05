@@ -40,7 +40,6 @@ def processComment(commment):
   if comment.author == "uiuc-bot":
     return
 
-  # Debug
   logging.debug(f"Processing: {comment.id} by {comment.author}")
 
   # The content of the comment is the `body`  
@@ -51,8 +50,7 @@ def processComment(commment):
   if reply:
     comment.reply(reply)
     logging.info(f"Replying to: {comment.id} by {comment.author}")
-
-  posts_replied_to.append(comment.id)
+    posts_replied_to.append(comment.id)
 
 def processSubmission(submission):
   if submission.id in posts_replied_to:
@@ -67,20 +65,24 @@ def processSubmission(submission):
   if reply:
     submission.reply(reply)
     logging.info(f"Replying to: {submission.title}")
-
-  posts_replied_to.append(submission.id)  
+    posts_replied_to.append(submission.id)  
 
 
 # == "main" loop ==
 while True:
   try:
     # Process any new comments:
+    logging.debug(f"== Processing new comments ==")
     for comment in comment_stream:
       if comment is None:
         break
       processComment(comment)
 
+    # Sleep a bit:
+    time.sleep(5)
+
     # Process any new submissions (posts):
+    logging.debug(f"== Processing new submissions ==")
     for submission in submission_stream:
       if submission is None:
         break
@@ -91,9 +93,9 @@ while True:
       for post_id in posts_replied_to:
         f.write(post_id + "\n")
 
-    # Pause (5 seconds):
+    # Pause (30 seconds):
     logging.debug(f"Sleeping...")
-    time.sleep(60)
+    time.sleep(30)
   except Exception as e:
-    logging.info(f"Exception: {e}.  Sleeping.")
+    logging.error(e, exc_info=True)
     time.sleep(60)
