@@ -10,18 +10,18 @@ gpa_visualization_url_template = "https://waf.cs.illinois.edu/discovery/grade_di
 
 courseScheduleTerm = "Spring 2020"
 
-df_courseSchedule = pd.read_csv('2020-sp.csv')
+df_courseSchedule = pd.read_csv('data/2020-sp.csv')
 df_courseSchedule["Number"] = df_courseSchedule["Number"].astype(str)
 df_courseSchedule["Course"] = df_courseSchedule["Subject"] + " " + df_courseSchedule["Number"]
 
-df_gpa = pd.read_csv('gpa-dataset.csv')
+df_gpa = pd.read_csv('data/gpa-dataset.csv')
 df_gpa = df_gpa[ df_gpa["Term"] >= "2017-fa" ]
 df_gpa["Number"] = df_gpa["Number"].astype(str)
 df_gpa["Course"] = df_gpa["Subject"] + " " + df_gpa["Number"]
 
-df_gened = pd.read_csv('gen-ed.csv')
+df_gened = pd.read_csv('data/gen-ed.csv')
 
-df_fa19 = pd.read_csv('uiuc-course-catalog-fa19.csv')
+df_fa19 = pd.read_csv('data/uiuc-course-catalog-fa19.csv')
 df_fa19["Number"] = df_fa19["Number"].astype(str)
 df_fa19["Course"] = df_fa19["Subject"] + " " + df_fa19["Number"]
 
