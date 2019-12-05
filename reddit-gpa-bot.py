@@ -16,7 +16,7 @@ bot = praw.Reddit(user_agent='UIUC GPA Bot v0.1',
     client_secret = os.getenv('CLIENT_SECRET'),
     username = os.getenv('REDDIT_USERNAME'),
     password= os.getenv('PASSWORD'))
-subreddit = bot.subreddit('testingground4bots')
+subreddit = bot.subreddit(os.getenv('SUBREDDIT'))
 
 comment_stream = subreddit.stream.comments(pause_after = -1)
 submission_stream = subreddit.stream.submissions(pause_after = -1)
@@ -72,10 +72,10 @@ while True:
     processComment(comment)
 
   # Process any new submissions (posts):
-  #for submission in submission_stream:
-  #  if submission is None:
-  #    break
-  #  processSubmission(submission)
+  for submission in submission_stream:
+    if submission is None:
+      break
+    processSubmission(submission)
 
   # Record any replies (for bot restart)
   with open("posts_replied_to.txt", "w") as f:
