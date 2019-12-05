@@ -36,6 +36,9 @@ def processComment(commment):
   if comment.id in posts_replied_to:
     return
 
+  if comment.author == "uiuc-bot":
+    return
+
   # The content of the comment is the `body`  
   s = comment.body
 
