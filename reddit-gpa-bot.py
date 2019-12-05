@@ -34,10 +34,14 @@ else:
 # == Processing Logic ==
 def processComment(commment):
   if comment.id in posts_replied_to:
+    logging.debug(f"Skipping already replied to post {comment.id}")
     return
 
   if comment.author == "uiuc-bot":
     return
+
+  # Debug
+  logging.debug(f"Processing: {comment.id} by {comment.author}")
 
   # The content of the comment is the `body`  
   s = comment.body
@@ -46,12 +50,13 @@ def processComment(commment):
   reply = get_reply_from_submission(s, comment.id)
   if reply:
     comment.reply(reply)
-    print(f"Bot replying to: {comment.id} by {comment.author}")
+    logging.info(f"Replying to: {comment.id} by {comment.author}")
 
   posts_replied_to.append(comment.id)
 
 def processSubmission(submission):
   if submission.id in posts_replied_to:
+    logging.debug(f"Skipping already replied to post {comment.id}")
     return
 
   # Use both the title of the post and body:
@@ -61,30 +66,34 @@ def processSubmission(submission):
   reply = get_reply_from_submission(s, submission.id)
   if reply:
     submission.reply(reply)
-    print(f"Bot replying to: {submission.title}")
+    logging.info(f"Replying to: {submission.title}")
 
   posts_replied_to.append(submission.id)  
 
 
 # == "main" loop ==
 while True:
-  # Process any new comments:
-  for comment in comment_stream:
-    if comment is None:
-      break
-    processComment(comment)
+  try:
+    # Process any new comments:
+    for comment in comment_stream:
+      if comment is None:
+        break
+      processComment(comment)
 
-  # Process any new submissions (posts):
-  for submission in submission_stream:
-    if submission is None:
-      break
-    processSubmission(submission)
+    # Process any new submissions (posts):
+    for submission in submission_stream:
+      if submission is None:
+        break
+      processSubmission(submission)
 
-  # Record any replies (for bot restart)
-  with open("posts_replied_to.txt", "w") as f:
-    for post_id in posts_replied_to:
-      f.write(post_id + "\n")
+    # Record any replies (for bot restart)
+    with open("posts_replied_to.txt", "w") as f:
+      for post_id in posts_replied_to:
+        f.write(post_id + "\n")
 
-  # Pause (5 seconds):
-  logging.debug(f"Sleeping...")
-  time.sleep(60)
+    # Pause (5 seconds):
+    logging.debug(f"Sleeping...")
+    time.sleep(60)
+  except Exception as e:
+    logging.info(f"Exception: {e}.  Sleeping.")
+    time.sleep(60)
