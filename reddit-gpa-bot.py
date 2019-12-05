@@ -54,7 +54,7 @@ def processComment(commment):
 
 def processSubmission(submission):
   if submission.id in posts_replied_to:
-    logging.debug(f"Skipping already replied to post {comment.id}")
+    logging.debug(f"Skipping already replied to post {submission.id}")
     return
 
   # Use both the title of the post and body:
