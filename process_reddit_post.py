@@ -142,7 +142,7 @@ def get_reply_from_submission(s, id=-1):
   courses = []
 
   # Find all CRNs:
-  re_crn = '\[(\d{5})\]'
+  re_crn = '\\\\?\[(\d{5})\\\\?\]'
   crnMatches = re.findall(re_crn, s)
   for crnMatch in crnMatches:
     crn = crnMatch
@@ -158,7 +158,7 @@ def get_reply_from_submission(s, id=-1):
 
 
   # Find all courses:
-  re_course = '\[([A-Za-z]{2,4})\s?(\d{3})\]'
+  re_course = '\\\\?\[([A-Za-z]{2,4})\s?(\d{3})\\\\?\]'
   courseMatches = re.findall(re_course, s)
   for courseMatch in courseMatches:
     subject = courseMatch[0].upper()
