@@ -131,7 +131,7 @@ def format_reply_for_course(course):
 
   # GenEd Info:
   if gen_eds != None:
-    response += f" -- Fullfilles: {gen_eds}"
+    response += f" -- GenEds: {gen_eds}"
 
   return response
 
