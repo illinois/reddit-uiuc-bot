@@ -137,6 +137,7 @@ def format_reply_for_course(course):
 
 
 def get_reply_from_submission(s, id=-1):
+  logging.debug(f"Message: {s}")
   courseInfos = []
   courses = []
 
