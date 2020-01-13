@@ -5,21 +5,9 @@ import logging
 
 from process_reddit_post import get_reply_from_submission
 
-
 # Using .env file for instance-specific settings
 from dotenv import load_dotenv
 load_dotenv()
-
-# Reddit Bot Init
-bot = praw.Reddit(user_agent='UIUC GPA Bot v0.1',
-    client_id = os.getenv('CLIENT_ID'),
-    client_secret = os.getenv('CLIENT_SECRET'),
-    username = os.getenv('REDDIT_USERNAME'),
-    password= os.getenv('PASSWORD'))
-subreddit = bot.subreddit(os.getenv('SUBREDDIT'))
-
-comment_stream = subreddit.stream.comments(pause_after = -1)
-submission_stream = subreddit.stream.submissions(pause_after = -1)
 
 # Load cache of replied_to posts:
 if not os.path.isfile("posts_replied_to.txt"):
@@ -29,6 +17,21 @@ else:
     posts_replied_to = f.read()
     posts_replied_to = posts_replied_to.split("\n")
     posts_replied_to = list(filter(None, posts_replied_to))
+
+
+# == Initialization ==
+def initializeBot():
+  bot = praw.Reddit(user_agent='UIUC GPA Bot v0.1',
+    client_id = os.getenv('CLIENT_ID'),
+    client_secret = os.getenv('CLIENT_SECRET'),
+    username = os.getenv('REDDIT_USERNAME'),
+    password= os.getenv('PASSWORD'))
+  subreddit = bot.subreddit(os.getenv('SUBREDDIT'))
+
+  comment_stream = subreddit.stream.comments(pause_after = -1)
+  submission_stream = subreddit.stream.submissions(pause_after = -1)
+
+  return comment_stream, submission_stream
 
 
 # == Processing Logic ==
@@ -69,6 +72,7 @@ def processSubmission(submission):
 
 
 # == "main" loop ==
+comment_stream, submission_stream = initializeBot()
 while True:
   try:
     # Process any new comments:
@@ -96,6 +100,11 @@ while True:
     # Pause (30 seconds):
     logging.debug(f"Sleeping...")
     time.sleep(30)
+    
   except Exception as e:
     logging.error(e, exc_info=True)
-    time.sleep(60)
+    time.sleep(120)
+
+    # When the bot runs into an exception, after sleeping for 120 seconds,
+    # re-initialize the bot to clear any errors stored by the API:
+    comment_stream, submission_stream = initializeBot()
