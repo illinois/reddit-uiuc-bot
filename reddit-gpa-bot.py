@@ -93,7 +93,7 @@ def processMessage(message):
 
 
 # == "main" loop ==
-comment_stream, submission_stream = initializeBot()
+comment_stream, submission_stream, message_stream = initializeBot()
 while True:
   try:
     # Process any new comments:
