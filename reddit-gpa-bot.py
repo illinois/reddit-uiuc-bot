@@ -30,8 +30,9 @@ def initializeBot():
 
   comment_stream = subreddit.stream.comments(pause_after = -1)
   submission_stream = subreddit.stream.submissions(pause_after = -1)
+  message_stream = bot.inbox.stream(pause_after = -1)
 
-  return comment_stream, submission_stream
+  return comment_stream, submission_stream, message_stream
 
 
 # == Processing Logic ==
@@ -68,7 +69,27 @@ def processSubmission(submission):
   if reply:
     submission.reply(reply)
     logging.info(f"Replying to: {submission.title}")
-    posts_replied_to.append(submission.id)  
+    posts_replied_to.append(submission.id)
+    
+def processMessage(message):
+  # This checking is likely redundant since the bot only reads unread msgs, but I added for consistency:
+  if message.id in posts_replied_to:
+    logging.debug(f"Skipping already replied to message {message.id}")
+    return
+
+  message.mark_read()
+  
+  # So that the bot does not reread the subject on replies and possibly duplicate requests:
+  if "re:" in message.subject:
+    s = message.body
+  else:
+    s = message.subject + " " + message.body
+
+  reply = get_reply_from_submission(s, message.id)
+  if reply:
+      message.reply(reply)
+      logging.info(f"Replying to: {message.subject} from {message.author}")
+      posts_replied_to.append(message.id)
 
 
 # == "main" loop ==
@@ -91,7 +112,17 @@ while True:
       if submission is None:
         break
       processSubmission(submission)
+      
+    # Sleep some more:
+    time.sleep(5)
 
+    # Process any new messages:
+    logging.debug(f"== Processing new messages ==")
+    for message in message_stream:
+      if message is None:
+        break
+      processMessage(message)
+      
     # Record any replies (for bot restart)
     with open("posts_replied_to.txt", "w") as f:
       for post_id in posts_replied_to:
@@ -107,4 +138,5 @@ while True:
 
     # When the bot runs into an exception, after sleeping for 120 seconds,
     # re-initialize the bot to clear any errors stored by the API:
-    comment_stream, submission_stream = initializeBot()
+    comment_stream, submission_stream, message_stream = initializeBot()
+    
