@@ -5,7 +5,7 @@ import math
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
-course_schedule_url_template = "https://courses.illinois.edu/schedule/2020/spring/:subject/:number"
+course_schedule_url_template = "https://courses.illinois.edu/schedule/2020/fall/:subject/:number"
 gpa_visualization_url_template = "https://waf.cs.illinois.edu/discovery/grade_disparity_between_sections_at_uiuc/?subj=:subject&course=:number"
 
 courseScheduleTerm = "Fall 2020"
