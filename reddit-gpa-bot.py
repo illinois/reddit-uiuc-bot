@@ -42,6 +42,9 @@ def processComment(commment):
     return
 
   if comment.author == "uiuc-bot":
+    if comment.score < 0:
+      comment.delete()
+      logging.debug(f"Deleting comment out of due to score reaching below threshold.")
     return
 
   logging.debug(f"Processing: {comment.id} by {comment.author}")
