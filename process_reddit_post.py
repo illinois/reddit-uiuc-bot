@@ -21,9 +21,6 @@ df_gpa["Course"] = df_gpa["Subject"] + " " + df_gpa["Number"]
 
 df_gened = pd.read_csv('data/gen-ed.csv')
 
-df_fa19 = pd.read_csv('data/uiuc-course-catalog-fa19.csv')
-df_fa19["Number"] = df_fa19["Number"].astype(str)
-df_fa19["Course"] = df_fa19["Subject"] + " " + df_fa19["Number"]
 
 def get_recent_average_gpa(course):
   df = df_gpa[ df_gpa["Course"] == course ].groupby("Course").agg("sum").reset_index()
@@ -92,14 +89,13 @@ def format_reply_for_course(course):
   subject, number = course.split(" ")
 
   d = df_courseSchedule[ df_courseSchedule["Course"] == course ]
-  actual_class = df_fa19[ df_fa19["Course"] == course ]
-  if len(d) == 0 and len(actual_class) == 0:
+  if len(d) == 0:
     logging.debug(f"No Course Found: {course}")
     return None
 
   if len(d) == 0:
-      courseName = actual_class["Name"].values[0]
-      creditHours = actual_class["Credit Hours"].values[0]
+      courseName = d["Name"].values[0]
+      creditHours = d["Credit Hours"].values[0]
       gen_eds = get_all_geneds(actual_class)
   else:
       courseName = d["Name"].values[0]
@@ -115,6 +111,13 @@ def format_reply_for_course(course):
 
   # Course Info:
   response = f"**\[{course}\]**: **{courseName}** -- {creditHours}"
+
+  if response[-1] == ".":
+    response = response[0:-1]
+
+  # Online
+  if d["Type"].values[0] == "ONL" or d["Type"].values[0] == "OD" or d["Type"].values[0] == "OLC" or d["Type"].values[0] == "OLB":
+    response += " (Online 🖥️)"
 
   # Course Offering Term:
   if len(d) > 0:
@@ -140,6 +143,7 @@ def get_reply_from_submission(s, id=-1):
   logging.debug(f"Message: {s}")
   courseInfos = []
   courses = []
+
 
   # Find all CRNs:
   re_crn = '\\\\?\[(\d{5})\\\\?\]'
@@ -173,9 +177,11 @@ def get_reply_from_submission(s, id=-1):
         courses.append(course)
         logging.info(f"[{id}] Output: {course}")
 
+
   # Prevent the output from being HUGE
   if len(courseInfos) > 10:
     courseInfos = courseInfos[0:9]
+
 
   # Join all the courseInfo strings together with an <hr> between them:
   if len(courseInfos) == 0:
