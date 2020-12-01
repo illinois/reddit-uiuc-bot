@@ -27,3 +27,6 @@ test("[CS 499] [43753] [66333] [CS 374]")
 
 
 test("The quick brown fox jumped over the lazy red dog.")
+
+# Should not have a GPA:
+test("[ABE 457]")

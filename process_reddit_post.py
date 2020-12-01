@@ -15,7 +15,7 @@ df_courseSchedule["Number"] = df_courseSchedule["Number"].astype(str)
 df_courseSchedule["Course"] = df_courseSchedule["Subject"] + " " + df_courseSchedule["Number"]
 
 df_gpa = pd.read_csv('data/uiuc-gpa-dataset.csv')
-df_gpa = df_gpa[ df_gpa["Term"] >= "2017-fa" ]
+df_gpa = df_gpa[ df_gpa["YearTerm"] >= "2017-fa" ]
 df_gpa["Number"] = df_gpa["Number"].astype(str)
 df_gpa["Course"] = df_gpa["Subject"] + " " + df_gpa["Number"]
 
