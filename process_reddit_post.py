@@ -12,7 +12,7 @@ courseScheduleTerm = "Spring 2021"
 
 df_courseSchedule = pd.read_csv('data/2021-sp.csv')
 df_courseSchedule["Number"] = df_courseSchedule["Number"].astype(str)
-df_courseSchedule["Course"] = df_courseSchedule["Subject"] + " " + df_courseSchedule["Number"]
+df_courseSchedule["Course"] = df_courseSchedule["Subject"] + " " + df_courseSchedule["Number"] + " " + df_courseSchedule["Section"]
 
 df_gpa = pd.read_csv('data/uiuc-gpa-dataset.csv')
 df_gpa = df_gpa[ df_gpa["YearTerm"] >= "2017-fa" ]
@@ -21,9 +21,12 @@ df_gpa["Course"] = df_gpa["Subject"] + " " + df_gpa["Number"]
 
 df_gened = pd.read_csv('data/gen-ed.csv')
 
+special_topics_flag = False
 
 def get_recent_average_gpa(course):
+
   df = df_gpa[ df_gpa["Course"] == course ].groupby("Course").agg("sum").reset_index()
+
   if len(df) == 0: return None
 
   df["Count GPA"] = df["A+"] + df["A"] + df["A-"] + df["B+"] + df["B"] + df["B-"] + df["C+"] + df["C"] + df["C-"] + df["D+"] + df["D"] + df["D-"] + df["W"]
@@ -85,10 +88,19 @@ def get_course_from_crn(crn):
     return course
 
 
-def format_reply_for_course(course):
-  subject, number = course.split(" ")
+def format_reply_for_course(course, section_flag):
+  section = ""
 
-  d = df_courseSchedule[ df_courseSchedule["Course"] == course ]
+  if section_flag:
+      subject, number, section = course.split(" ")
+  else:
+      subject, number = course.split(" ")
+
+  d = df_courseSchedule[ df_courseSchedule["Course"] == course]
+
+  if(section):
+      d = d[d["Section"] == section]
+
   if len(d) == 0:
     logging.debug(f"No Course Found: {course}")
     return None
@@ -98,8 +110,13 @@ def format_reply_for_course(course):
       creditHours = d["Credit Hours"].values[0]
       gen_eds = get_all_geneds(actual_class)
   else:
-      courseName = d["Name"].values[0]
-      creditHours = d["Credit Hours"].values[0]
+      if section:
+          courseName = d["Section Title"].values[0]
+          creditHours = d["Section Credit Hours"].values[0]
+          section = d["Section"].values[0]
+      else:
+          courseName = d["Name"].values[0]
+          creditHours = d["Credit Hours"].values[0]
       courseScheduleURL = course_schedule_url_template.replace(":subject", subject).replace(":number", number)
       gen_eds = get_all_geneds(course)
 
@@ -144,7 +161,6 @@ def get_reply_from_submission(s, id=-1):
   courseInfos = []
   courses = []
 
-
   # Find all CRNs:
   re_crn = '\\\\?\[(\d{5})\\\\?\]'
   crnMatches = re.findall(re_crn, s)
@@ -154,24 +170,32 @@ def get_reply_from_submission(s, id=-1):
 
     course = get_course_from_crn(crn)
     if course != None and course not in courses:
-      courseInfo = format_reply_for_course(course)
+      courseInfo = format_reply_for_course(course, False)
       if courseInfo != None:
         courseInfos.append(f"**\[{crn}\]** -> " + courseInfo)
         courses.append(course)
         logging.info(f"[{id}] Output: {course}")
 
-
   # Find all courses:
-  re_course = '\\\\?\[([A-Za-z]{2,4})\s?(\d{3})\\\\?\]'
+  re_course = '\\\\?\[([A-Za-z]{2,4})\s?(\d{3})\s?([A-Za-z0-9]{0,4})\\\\?\]'
   courseMatches = re.findall(re_course, s)
   for courseMatch in courseMatches:
     subject = courseMatch[0].upper()
     number = courseMatch[1]
-    course = f"{subject} {number}"
-    logging.info(f"[{id}] Course Match: {course}")
+    section = courseMatch[2]
 
+    section_flag = False
+    if len(section) > 1:
+        section_flag = True
+
+    if section_flag:
+        course = f"{subject} {number} {section}"
+    else:
+        course = f"{subject} {number}"
+
+    logging.info(f"[{id}] Course Match: {course}")
     if course not in courses:
-      courseInfo = format_reply_for_course(course)
+      courseInfo = format_reply_for_course(course, section_flag)
       if courseInfo != None:
         courseInfos.append(courseInfo)
         courses.append(course)
