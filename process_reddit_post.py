@@ -12,7 +12,7 @@ courseScheduleTerm = "Spring 2021"
 
 df_courseSchedule = pd.read_csv('data/2021-sp.csv')
 df_courseSchedule["Number"] = df_courseSchedule["Number"].astype(str)
-df_courseSchedule["Course"] = df_courseSchedule["Subject"] + " " + df_courseSchedule["Number"] + " " + df_courseSchedule["Section"]
+df_courseSchedule["Course"] = df_courseSchedule["Subject"] + " " + df_courseSchedule["Number"]
 
 df_gpa = pd.read_csv('data/uiuc-gpa-dataset.csv')
 df_gpa = df_gpa[ df_gpa["YearTerm"] >= "2017-fa" ]
@@ -20,8 +20,6 @@ df_gpa["Number"] = df_gpa["Number"].astype(str)
 df_gpa["Course"] = df_gpa["Subject"] + " " + df_gpa["Number"]
 
 df_gened = pd.read_csv('data/gen-ed.csv')
-
-special_topics_flag = False
 
 def get_recent_average_gpa(course):
 
@@ -96,9 +94,10 @@ def format_reply_for_course(course, section_flag):
   else:
       subject, number = course.split(" ")
 
-  d = df_courseSchedule[ df_courseSchedule["Course"] == course]
+  d = df_courseSchedule[ df_courseSchedule["Course"] == subject+' ' +number]
+  #logging.debug(f"testing: {d}")
 
-  if(section):
+  if(section_flag):
       d = d[d["Section"] == section]
 
   if len(d) == 0:
